@@ -1,0 +1,744 @@
+{
+  "info": {
+    "_postman_id": "ai-sdr-collection-v1",
+    "name": "AI SDR — Full API Collection",
+    "description": "Complete Postman collection for the AI Sales Development Representative API.\n\n## Setup Instructions\n\n1. Import this collection into Postman\n2. Set the `base_url` variable to `http://localhost:8000/api/v1`\n3. Run **Register** or **Login** first — the collection auto-saves the JWT token\n4. All other requests use the saved token automatically via the collection variable `{{auth_token}}`\n\n## Collection Variables\n\n| Variable | Default Value | Description |\n|---|---|---|\n| `base_url` | `http://localhost:8000/api/v1` | Backend API base URL |\n| `auth_token` | (auto-set) | JWT token saved after login/register |\n| `lead_id` | (auto-set) | Lead UUID saved after creating a lead |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lead_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "User registration, login, and profile endpoints. Run Register or Login first — the JWT token is auto-saved to the `auth_token` collection variable.",
+      "item": [
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', body.access_token);",
+                  "    console.log('Token saved:', body.access_token.substring(0, 20) + '...');",
+                  "    pm.test('Registration successful', () => pm.response.to.have.status(201));",
+                  "    pm.test('Token received', () => pm.expect(body.access_token).to.be.a('string'));",
+                  "    pm.test('User object returned', () => pm.expect(body.user.email).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"testpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account.\n\n**Auto-saves** the returned JWT token to `{{auth_token}}` collection variable.\n\n**Validation rules:**\n- Email must be valid format\n- Password must be at least 8 characters\n- Email must not already be registered (409 if duplicate)\n\n**Returns:** JWT access token + user object"
+          },
+          "response": [
+            {
+              "name": "201 Created — Registration successful",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"testpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/register"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"demo@aisdr.com\",\n    \"created_at\": \"2024-01-15T10:30:00Z\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict — Email already registered",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"testpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/register"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"detail\": \"Email already registered\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', body.access_token);",
+                  "    console.log('Login successful. Token saved.');",
+                  "    pm.test('Login successful', () => pm.response.to.have.status(200));",
+                  "    pm.test('Token received', () => pm.expect(body.access_token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"testpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Log in with email and password.\n\n**Auto-saves** the JWT token to `{{auth_token}}`.\n\n**Returns:** JWT access token + user object\n\n**Errors:** `401` if email or password is wrong"
+          },
+          "response": [
+            {
+              "name": "200 OK — Login successful",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"testpassword123\"\n}"
+                },
+                "url": {"raw": "{{base_url}}/auth/login"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"demo@aisdr.com\",\n    \"created_at\": \"2024-01-15T10:30:00Z\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized — Wrong credentials",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@aisdr.com\",\n  \"password\": \"wrongpassword\"\n}"
+                },
+                "url": {"raw": "{{base_url}}/auth/login"}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"detail\": \"Invalid email or password\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Current User (Me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('User has email', () => pm.expect(pm.response.json().email).to.be.a('string'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get the profile of the currently authenticated user.\n\nRequires: `Authorization: Bearer {{auth_token}}`"
+          },
+          "response": [
+            {
+              "name": "200 OK — User profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+                "url": {"raw": "{{base_url}}/auth/me"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"email\": \"demo@aisdr.com\",\n  \"created_at\": \"2024-01-15T10:30:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 Leads — CRUD",
+      "description": "Create, read, update, and delete leads. All endpoints require a valid JWT token in the Authorization header.\n\nThe JWT token is automatically used via `{{auth_token}}` which was set by the Login or Register request.",
+      "item": [
+        {
+          "name": "Create Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('lead_id', body.id);",
+                  "    console.log('Lead created. ID saved:', body.id);",
+                  "    pm.test('Lead created (201)', () => pm.response.to.have.status(201));",
+                  "    pm.test('Lead has ID', () => pm.expect(body.id).to.be.a('string'));",
+                  "    pm.test('Status is new', () => pm.expect(body.status).to.equal('new'));",
+                  "    pm.test('AI fields are null', () => pm.expect(body.qualification_score).to.be.null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{auth_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sarah Johnson\",\n  \"email\": \"sarah.johnson@techcorp.com\",\n  \"company\": \"TechCorp Inc.\",\n  \"job_title\": \"Chief Technology Officer\",\n  \"industry\": \"Technology\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads",
+              "host": ["{{base_url}}"],
+              "path": ["leads"]
+            },
+            "description": "Create a new lead.\n\n**Auto-saves** the returned lead UUID to `{{lead_id}}`.\n\n**Required fields:** name, email, company, job_title, industry\n**Optional:** status (defaults to 'new')\n\nAI fields (qualification_score, generated_email_body, etc.) are null until you run the AI endpoints."
+          },
+          "response": [
+            {
+              "name": "201 Created — Lead created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Authorization", "value": "Bearer {{auth_token}}"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Sarah Johnson\",\n  \"email\": \"sarah.johnson@techcorp.com\",\n  \"company\": \"TechCorp Inc.\",\n  \"job_title\": \"Chief Technology Officer\",\n  \"industry\": \"Technology\"\n}"
+                },
+                "url": {"raw": "{{base_url}}/leads"}
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\",\n  \"user_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"name\": \"Sarah Johnson\",\n  \"email\": \"sarah.johnson@techcorp.com\",\n  \"company\": \"TechCorp Inc.\",\n  \"job_title\": \"Chief Technology Officer\",\n  \"industry\": \"Technology\",\n  \"status\": \"new\",\n  \"qualification_score\": null,\n  \"qualification_reason\": null,\n  \"generated_email_subject\": null,\n  \"generated_email_body\": null,\n  \"generated_email_cta\": null,\n  \"created_at\": \"2024-01-15T10:31:00Z\",\n  \"updated_at\": \"2024-01-15T10:31:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List All Leads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Has items array', () => pm.expect(body.items).to.be.an('array'));",
+                  "pm.test('Has pagination fields', () => {",
+                  "    pm.expect(body.total).to.be.a('number');",
+                  "    pm.expect(body.page).to.be.a('number');",
+                  "    pm.expect(body.pages).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{auth_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/leads?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["leads"],
+              "query": [
+                {"key": "page", "value": "1", "description": "Page number (default: 1)"},
+                {"key": "limit", "value": "20", "description": "Items per page (max: 100, default: 20)"},
+                {"key": "search", "value": "", "description": "Search name/company/industry", "disabled": true},
+                {"key": "status", "value": "qualified", "description": "Filter by status: new|qualified|contacted|converted|rejected", "disabled": true},
+                {"key": "industry", "value": "Technology", "description": "Filter by industry (partial match)", "disabled": true},
+                {"key": "min_score", "value": "70", "description": "Minimum qualification score (0-100)", "disabled": true}
+              ]
+            },
+            "description": "List all leads for the authenticated user.\n\n**Pagination:** Use `page` and `limit` query params.\n\n**Filters** (all optional, all can be combined):\n- `search` — searches name, company, industry (case-insensitive)\n- `status` — exact match on status enum\n- `industry` — partial, case-insensitive match\n- `min_score` — only leads with score >= this value\n\nToggle the disabled query params above to try different filters."
+          },
+          "response": [
+            {
+              "name": "200 OK — Paginated lead list",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+                "url": {"raw": "{{base_url}}/leads?page=1&limit=20"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\",\n      \"name\": \"Sarah Johnson\",\n      \"company\": \"TechCorp Inc.\",\n      \"job_title\": \"Chief Technology Officer\",\n      \"industry\": \"Technology\",\n      \"status\": \"new\",\n      \"qualification_score\": null,\n      \"created_at\": \"2024-01-15T10:31:00Z\"\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"pages\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Leads — Filtered by Status",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads?status=qualified&min_score=70&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["leads"],
+              "query": [
+                {"key": "status", "value": "qualified"},
+                {"key": "min_score", "value": "70"},
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            },
+            "description": "Get only qualified leads with score >= 70. Good example of combining multiple filters."
+          }
+        },
+        {
+          "name": "List Leads — Search by Name/Company",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads?search=tech",
+              "host": ["{{base_url}}"],
+              "path": ["leads"],
+              "query": [
+                {"key": "search", "value": "tech"}
+              ]
+            },
+            "description": "Search leads where name, company, or industry contains 'tech' (case-insensitive)."
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Has total_leads', () => pm.expect(body.total_leads).to.be.a('number'));",
+                  "pm.test('Has qualified_leads', () => pm.expect(body.qualified_leads).to.be.a('number'));",
+                  "pm.test('Has average_score', () => pm.expect(body.average_score).to.be.a('number'));",
+                  "pm.test('Has emails_generated', () => pm.expect(body.emails_generated).to.be.a('number'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/stats",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "stats"]
+            },
+            "description": "Get dashboard statistics for the current user.\n\nReturns:\n- `total_leads` — total number of leads\n- `qualified_leads` — leads that have been AI-scored\n- `average_score` — mean qualification score\n- `emails_generated` — leads with AI-generated emails"
+          },
+          "response": [
+            {
+              "name": "200 OK — Dashboard stats",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+                "url": {"raw": "{{base_url}}/leads/stats"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"total_leads\": 10,\n  \"qualified_leads\": 6,\n  \"average_score\": 74.3,\n  \"emails_generated\": 3\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Lead by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Correct lead returned', () => pm.expect(body.id).to.equal(pm.collectionVariables.get('lead_id')));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/{{lead_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "{{lead_id}}"]
+            },
+            "description": "Get a single lead by UUID.\n\nUses `{{lead_id}}` which was auto-saved when you created a lead.\n\nReturns 404 if the lead doesn't exist or belongs to a different user."
+          },
+          "response": [
+            {
+              "name": "404 Not Found — Lead not found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"detail\": \"Lead not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status updated', () => pm.expect(pm.response.json().status).to.equal('contacted'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{auth_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\",\n  \"job_title\": \"VP of Engineering\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/{{lead_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "{{lead_id}}"]
+            },
+            "description": "Update any fields on a lead. All fields are optional — only include what you want to change (partial update).\n\nYou can update: name, email, company, job_title, industry, status."
+          }
+        },
+        {
+          "name": "Delete Lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204 (No Content)', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/{{lead_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "{{lead_id}}"]
+            },
+            "description": "Permanently delete a lead by UUID.\n\nReturns 204 No Content on success. Returns 404 if not found or owned by another user.\n\n**Warning:** This is irreversible."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI Features",
+      "description": "AI-powered endpoints for lead qualification (OpenAI GPT-4o-mini) and email generation (Google Gemini 2.5 Flash).\n\nThese endpoints make real API calls to AI providers and may take 2–5 seconds to respond.",
+      "item": [
+        {
+          "name": "Qualify Lead (OpenAI GPT-4o-mini)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Score is a number', () => pm.expect(body.score).to.be.a('number'));",
+                  "pm.test('Score is 0-100', () => {",
+                  "    pm.expect(body.score).to.be.at.least(0);",
+                  "    pm.expect(body.score).to.be.at.most(100);",
+                  "});",
+                  "pm.test('Reason is a string', () => pm.expect(body.reason).to.be.a('string'));",
+                  "console.log('AI Score:', body.score);",
+                  "console.log('Reason:', body.reason);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/{{lead_id}}/qualify",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "{{lead_id}}", "qualify"]
+            },
+            "description": "Trigger AI lead qualification using **OpenAI GPT-4o-mini**.\n\nSends the lead's name, company, industry, and job_title to GPT-4o-mini.\n\nScoring criteria:\n- Decision-making authority (C-level/VP/Director = higher)\n- Industry value (Technology/Finance/Healthcare = higher)\n- Company potential\n\nSaves the score and reason to the database and updates lead status to 'qualified'.\n\n**Note:** Makes a real OpenAI API call. Requires a valid OPENAI_API_KEY in backend .env.\n\n**Errors:** `502` if OpenAI API is unavailable or key is invalid."
+          },
+          "response": [
+            {
+              "name": "200 OK — Lead qualified",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+                "url": {"raw": "{{base_url}}/leads/{{lead_id}}/qualify"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"score\": 87.0,\n  \"reason\": \"CTO at a technology company signals strong decision-making authority and budget control. Technology industry is a high-value vertical with active purchasing cycles and strong ROI awareness.\"\n}"
+            },
+            {
+              "name": "502 Bad Gateway — OpenAI API error",
+              "status": "Bad Gateway",
+              "code": 502,
+              "body": "{\n  \"detail\": \"OpenAI API error: Incorrect API key provided\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Email (Google Gemini 2.5 Flash)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Has email subject', () => pm.expect(body.subject).to.be.a('string').and.not.empty);",
+                  "pm.test('Has email body', () => pm.expect(body.email).to.be.a('string').and.not.empty);",
+                  "pm.test('Has CTA', () => pm.expect(body.cta).to.be.a('string').and.not.empty);",
+                  "console.log('Subject:', body.subject);",
+                  "console.log('CTA:', body.cta);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/{{lead_id}}/generate-email",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "{{lead_id}}", "generate-email"]
+            },
+            "description": "Generate a personalized cold outreach email using **Google Gemini 2.5 Flash** (via OpenRouter).\n\nPrompt instructs Gemini to:\n- Write in a professional yet conversational tone\n- Reference the lead's specific role and industry\n- Keep the body under 150 words\n- Include a specific, actionable call to action\n\nSaves subject, body, and CTA to the database.\n\n**Note:** Makes a real Gemini API call via OpenRouter. Requires a valid GEMINI_API_KEY (OpenRouter key) in backend .env.\n\n**Errors:** `502` if Gemini/OpenRouter API is unavailable."
+          },
+          "response": [
+            {
+              "name": "200 OK — Email generated",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+                "url": {"raw": "{{base_url}}/leads/{{lead_id}}/generate-email"}
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"subject\": \"Helping TechCorp accelerate engineering velocity by 40%\",\n  \"email\": \"Hi Sarah,\\n\\nI noticed TechCorp has been scaling its engineering team rapidly — congratulations on the growth!\\n\\nAs CTO, I imagine you're constantly balancing shipping new features with maintaining system reliability. We've helped similar tech companies reduce deployment friction by 40% while improving uptime.\\n\\nI'd love to share a 5-minute case study on how we did it.\\n\\nBest regards,\\n[Your Name]\",\n  \"cta\": \"Would you be free for a 15-minute call this Thursday or Friday?\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔒 Error Scenarios",
+      "description": "Test requests that demonstrate error handling. Use these to verify the API handles bad input gracefully.",
+      "item": [
+        {
+          "name": "Register — Password Too Short",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"short\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Should return 422 Unprocessable Entity — password must be at least 8 characters."
+          }
+        },
+        {
+          "name": "Register — Invalid Email Format",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"validpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Should return 422 — email field must be a valid email address."
+          }
+        },
+        {
+          "name": "Request Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leads",
+              "host": ["{{base_url}}"],
+              "path": ["leads"]
+            },
+            "description": "Should return 401 Unauthorized — no Authorization header provided."
+          }
+        },
+        {
+          "name": "Request With Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer invalid.token.here"}],
+            "url": {
+              "raw": "{{base_url}}/leads",
+              "host": ["{{base_url}}"],
+              "path": ["leads"]
+            },
+            "description": "Should return 401 Unauthorized — JWT signature invalid."
+          }
+        },
+        {
+          "name": "Get Non-Existent Lead",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{auth_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/leads/00000000-0000-0000-0000-000000000000",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Should return 404 Not Found — UUID does not exist in the database."
+          }
+        },
+        {
+          "name": "Create Lead — Missing Required Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{auth_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads",
+              "host": ["{{base_url}}"],
+              "path": ["leads"]
+            },
+            "description": "Should return 422 — company, job_title, and industry are required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is healthy', () => pm.expect(pm.response.json().status).to.equal('healthy'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/health",
+              "host": ["http://localhost:8000"],
+              "path": ["health"]
+            },
+            "description": "Check that the backend server is running.\n\nNo authentication required. Returns `{\"status\": \"healthy\", \"version\": \"1.0.0\"}`"
+          },
+          "response": [
+            {
+              "name": "200 OK — Server healthy",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"healthy\",\n  \"version\": \"1.0.0\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
