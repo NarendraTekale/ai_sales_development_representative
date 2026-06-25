@@ -1,0 +1,51 @@
+name: ai-sales-development-representative
+
+services:
+  - name: backend
+    source_dir: backend
+    dockerfile_path: backend/Dockerfile
+    http_port: 8000
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    routes:
+      - path: /api
+    envs:
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      - key: SECRET_KEY
+        value: "change-me-in-production"
+        type: SECRET
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: OPENAI_API_KEY
+        value: ""
+        type: SECRET
+      - key: GEMINI_API_KEY
+        value: ""
+        type: SECRET
+      - key: BACKEND_CORS_ORIGINS
+        value: '["${frontend.PUBLIC_URL}","http://localhost:3000"]'
+
+  - name: frontend
+    source_dir: frontend
+    dockerfile_path: frontend/Dockerfile
+    http_port: 3000
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    routes:
+      - path: /
+    build_args:
+      - key: NEXT_PUBLIC_API_URL
+        value: "${backend.PUBLIC_URL}/api/v1"
+    envs:
+      - key: NEXT_PUBLIC_API_URL
+        value: "${backend.PUBLIC_URL}/api/v1"
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    size: basic
+    num_nodes: 1
