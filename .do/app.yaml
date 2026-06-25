@@ -1,19 +1,20 @@
 name: ai-sales-development-representative
+region: sgp
 
 services:
-  - name: backend
-    source_dir: backend
-    dockerfile_path: backend/Dockerfile
-    http_port: 8000
+  - name: app
+    dockerfile_path: Dockerfile
+    http_port: 8080
     instance_size_slug: basic-xxs
     instance_count: 1
     routes:
-      - path: /api
+      - path: /
     envs:
       - key: DATABASE_URL
-        value: ${db.DATABASE_URL}
+        value: ""
+        type: SECRET
       - key: SECRET_KEY
-        value: "change-me-in-production"
+        value: ""
         type: SECRET
       - key: ALGORITHM
         value: HS256
@@ -26,26 +27,4 @@ services:
         value: ""
         type: SECRET
       - key: BACKEND_CORS_ORIGINS
-        value: '["${frontend.PUBLIC_URL}","http://localhost:3000"]'
-
-  - name: frontend
-    source_dir: frontend
-    dockerfile_path: frontend/Dockerfile
-    http_port: 3000
-    instance_size_slug: basic-xxs
-    instance_count: 1
-    routes:
-      - path: /
-    build_args:
-      - key: NEXT_PUBLIC_API_URL
-        value: "${backend.PUBLIC_URL}/api/v1"
-    envs:
-      - key: NEXT_PUBLIC_API_URL
-        value: "${backend.PUBLIC_URL}/api/v1"
-
-databases:
-  - name: db
-    engine: PG
-    version: "16"
-    size: basic
-    num_nodes: 1
+        value: '["https://${APP_DOMAIN}","http://localhost:3000"]'
